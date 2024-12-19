@@ -6,6 +6,13 @@ from .functions import load_job_criteria, analyze_resume, calculate_score, gener
 import os
 from django.conf import settings
 from django.templatetags.static import static 
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.hashers import make_password, check_password
+from .forms import SignupForm
+from django.contrib import messages
+from datetime import datetime
+from .models import User
+import json
 
 # Create your views here.
 
@@ -21,8 +28,165 @@ from django.templatetags.static import static
 #     files = UploadedFile.objects.all()
 #     return render(request, 'upload_file.html', {'form': form, 'files': files})
 
-def index(request):
-    return render(request, "index.html")
+def landing(request):
+    return render(request, "LandingPage.html")
+
+#Login view
+# def login(request):
+#     return render(request,"login.html")
+
+def login(request):
+    if request.method == "POST":
+        email = request.POST.get('email')
+        password = request.POST.get('password')
+
+        try:
+            # Get user by email
+            user = User.objects.get(email=email)
+
+            # Check if the password matches the hashed password
+            if check_password(password, user.password):
+                # Login successful, store user session
+                request.session['user_id'] = user.email
+                return redirect('landing')  # Redirect to the home page or dashboard
+            else:
+                messages.error(request, "Invalid email or password")
+        except User.DoesNotExist:
+            messages.error(request, "User with this email does not exist")
+        
+        return redirect('login')  # Stay on the login page if login failed
+
+    return render(request, 'login.html')
+
+
+#Login View Code ends here
+
+
+
+
+# Signup view
+# def signup(request):
+#     return render(request, 'signup.html') 
+
+# def signup(request):
+#     if request.method == 'POST':
+#         form = SignupForm(request.POST)
+#         if form.is_valid():
+#             user = form.save(commit=False)
+#             user.password = make_password(user.password)  # Hash the password before saving
+#             user.save()
+#             messages.success(request, "Your account has been created successfully.")
+#             return redirect('login')  # Redirect to login page after successful signup
+#         else:
+#             messages.error(request, "Please correct the errors below.")
+#     else:
+#         form = SignupForm()
+
+#     return render(request, 'signup.html', {'form': form})
+
+
+def signup(request):
+    if request.method == "POST":
+        # Initialize the form with POST data
+        form = SignupForm(request.POST)
+
+        # Check if the form is valid
+        if form.is_valid():
+            # Clean the data from the form
+            cleaned_data = form.cleaned_data
+            first_name = cleaned_data['first_name']
+            last_name = cleaned_data['last_name']
+            contact_number = cleaned_data['contact_number']
+            email = cleaned_data['email']
+            dob = cleaned_data['dob']
+            password = cleaned_data['password']
+
+            # Hash the password before saving
+            hashed_password = make_password(password)
+
+            # Calculate the age based on the date of birth
+            today = datetime.today()
+            age = today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
+
+            # Create a new user object
+            user = User(
+                first_name=first_name,
+                last_name=last_name,
+                contact_number=contact_number,
+                email=email,
+                dob=dob,
+                age=age,  # Age is calculated manually here
+                password=hashed_password  # Store the hashed password
+            )
+
+            # Save the new user to the database
+            user.save()
+
+            # Redirect to the login page after successful signup
+            return redirect('login')
+
+        else:
+            # If the form is not valid, render the page again with form errors
+            return render(request, 'signup.html', {'form': form})
+
+    else:
+        # If GET request, initialize an empty form
+        form = SignupForm()
+
+    # Render the signup page with the form
+    return render(request, 'signup.html', {'form': form})
+
+
+# Here the Signup View Ends
+
+
+
+
+# Templates view starting here
+
+def resume_templates(request):
+    # Define the path to the JSON file
+    json_file_path = os.path.join(settings.BASE_DIR, 'ATS_Project_Mini','static', 'data', 'templates.json')
+    
+    # Read the JSON file and load the data
+    with open(json_file_path, 'r') as file:
+        templates = json.load(file)
+    # templates = [
+    #     {
+    #     "name": "Modern Resume",
+    #     "image": "img/template1.png",  # Adjusted image path
+    #     "file": "files/template1.docx",  # Adjusted file path
+    #     "description": "A sleek and professional resume template suitable for all industries.",
+    # },
+    # {
+    #     "name": "Creative Resume",
+    #     "image": "img/template2.png",  # Adjusted image path
+    #     "file": "files/template2.docx",  # Adjusted file path
+    #     "description": "Perfect for creatives, this resume showcases design and innovation.",
+    # },
+    # {
+    #     "name": "Minimalist Resume",
+    #     "image": "img/template3.png",  # Adjusted image path
+    #     "file": "files/template3.docx",  # Adjusted file path
+    #     "description": "A clean and simple layout ideal for professionals with less experience.",
+    # },
+    #     # Add more templates as needed
+    # ]
+    return render(request, "templates.html", {"templates": templates})
+
+def editableTemplates(request):
+    # Define the path to the JSON file
+    json_file_path = os.path.join(settings.BASE_DIR, 'ATS_Project_Mini','static', 'data', 'editableTemplates.json')
+    
+    # Read the JSON file and load the data
+    with open(json_file_path, 'r') as file:
+        templates = json.load(file)
+    
+    return render(request, "editTemplates.html", {"templates": templates})
+
+
+
+# templates view ends here
 
 def upload_file(request):
     if request.method == 'POST':
@@ -87,7 +251,7 @@ def download_file(request, file_id):
 # View to pass resume to Analyzer Framework
 def ats_algorithm(filepath):
     # Ensure the path to job_criteria.json is correct
-    job_criteria_path = os.path.join(r'C:\Users\ILG2KOR\Desktop\CERTIFICATES\Isolated\Backend', 'ATS_Project_Mini', 'static', 'job_criteria.json')
+    job_criteria_path = os.path.join(settings.BASE_DIR, 'ATS_Project_Mini', 'static', 'job_criteria.json')
     print("---------------------------------*************************---------------------------")
 
     print(f"Job criteria path: {job_criteria_path}")
@@ -106,3 +270,18 @@ def ats_algorithm(filepath):
     feedback_file = generate_feedback(results)
     appreciation_file = generate_appreciation(results)
     return score, feedback_file
+
+
+
+
+
+
+# Views for the Editable Resume templates
+
+
+def beginResume(request):
+    return render(request,'beginResume.html')
+
+
+def editTemplates(request):
+    return render(request,'editTemplates.html')

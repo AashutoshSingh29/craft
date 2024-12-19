@@ -4,6 +4,7 @@ from PyPDF2 import PdfReader
 from docx import Document
 import spacy
 import os
+from django.conf import settings
 
 # Load NLP model
 nlp = spacy.load("zh_core_web_sm")
@@ -20,13 +21,27 @@ def extract_text_from_pdf(filepath):
         text += page.extract_text()
     return text
 
+# def extract_text_from_docx(filepath):
+#     print("File path received by extract text resume in docs")
+#     doc = Document(filepath)
+#     print("Docs converted-----> ", doc)
+#     return "\n".join([p.text for p in doc.paragraphs])
 def extract_text_from_docx(filepath):
-    print("File path received by extract text resume in docs")
     doc = Document(filepath)
-    print("Docs converted-----> ", doc)
-    return "\n".join([p.text for p in doc.paragraphs])
+    # Include text from paragraphs
+    paragraphs = [p.text.strip() for p in doc.paragraphs if p.text.strip()]
+    # Handle additional content like tables
+    tables = []
+    for table in doc.tables:
+        for row in table.rows:
+            for cell in row.cells:
+                cell_text = cell.text.strip()
+                if cell_text:
+                    tables.append(cell_text)
+    # Combine paragraphs and table text
+    return "\n".join(paragraphs + tables)
 
-def socialCheck(text, json_path=os.path.join(r'C:\Users\ILG2KOR\Desktop\CERTIFICATES\Isolated\Backend', 'ATS_Project_Mini', 'static', 'job_criteria.json')):
+def socialCheck(text, json_path=os.path.join(settings.BASE_DIR, 'ATS_Project_Mini', 'static', 'job_criteria.json')):
     """
     Function to check social contact details in the resume.
     """
@@ -155,7 +170,7 @@ def analyze_resume(filepath, job_criteria):
         results["format_issues"].append("Contains tables or images")
 
     # Call socialCheck with the correct argument name
-    social_results = socialCheck(text, json_path=os.path.join(r'C:\Users\ILG2KOR\Desktop\CERTIFICATES\Isolated\Backend', 'ATS_Project_Mini', 'static', 'job_criteria.json'))
+    social_results = socialCheck(text, json_path=os.path.join(settings.BASE_DIR, 'ATS_Project_Mini', 'static', 'job_criteria.json'))
     results.update(social_results)
 
     return results, text

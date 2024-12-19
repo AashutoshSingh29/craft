@@ -1,2 +1,5 @@
 Missing Keywords: Python, Machine Learning, Data Analysis, Team Collaboration, Project Management
+Missing Skills: Include at least 5 skills. Currently, 2 skill(s) matched.
+Missing Email: Include your email in the resume.
+Missing Linkedin: Include your linkedin in the resume.
 Missing Github: Include your github in the resume.
