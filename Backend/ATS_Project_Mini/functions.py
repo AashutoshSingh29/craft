@@ -187,7 +187,7 @@ def calculate_score(results, job_criteria):
     score = (matched_criteria / total_criteria) * 100
     return round(score, 2)
 
-def generate_feedback(results, output_path="feedback.txt"):
+def generate_feedback(results, output_path=None):
     feedback = []
     if results["missing_keywords"]:
         feedback.append(f"Missing Keywords: {', '.join(results['missing_keywords'])}")
@@ -201,6 +201,10 @@ def generate_feedback(results, output_path="feedback.txt"):
     for key in ["email", "phone", "linkedin", "github"]:
         if results.get(f"missing_{key}", True):
             feedback.append(f"Missing {key.capitalize()}: Include your {key} in the resume.")
+
+    # Default output path in MEDIA_ROOT
+    if not output_path:
+        output_path = os.path.join(settings.MEDIA_ROOT, "feedback.txt")
 
     with open(output_path, "w") as f:
         f.write("\n".join(feedback))

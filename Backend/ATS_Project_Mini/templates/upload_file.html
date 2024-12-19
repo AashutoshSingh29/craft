@@ -169,7 +169,7 @@
                 <h3>ATS Resume Score: {{ score }}%</h3>
                 <p class="alert-info">
                     Feedback saved to: 
-                    <a href="{{ feedback_path }}" target="_blank">View Feedback</a>
+                    <a href="{{ feedback_path }}" download="feedback.txt" target="_blank">Download Feedback</a>
                 </p>
             {% elif error %}
                 <p class="error-message">{{ error }}</p>

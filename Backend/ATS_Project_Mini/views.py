@@ -235,13 +235,14 @@ def upload_file(request):
                 print(f"File path passed to ats_algorithm: {file_path}")  # Debug print
 
                 score, feedback_path = ats_algorithm(file_path)
+                feedback_url = settings.MEDIA_URL + feedback_path
                 print("***********************--------------------************************")
 
                 # Display the score and feedback path to the user
                 return render(request, 'upload_file.html', {
                     'form': form,
                     'score': score,
-                    'feedback_path': feedback_path,
+                    'feedback_path': feedback_url,
                     'files': UploadedFile.objects.all()
                 })
             except FileNotFoundError as e:
