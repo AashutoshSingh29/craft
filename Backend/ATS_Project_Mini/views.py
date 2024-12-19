@@ -15,8 +15,19 @@ from .models import User
 import json
 
 # Create your views here.
+def check_login(request):
+    # Check if the user is logged in by looking for a session value
+    if 'user_id' not in request.session:
+        return redirect('login')  # Redirect to login page if not logged in
+    return True
 
 
+def login_required_custom(view_func):
+    def _wrapped_view(request, *args, **kwargs):
+        if 'user_id' not in request.session:
+            return redirect('login')
+        return view_func(request, *args, **kwargs)
+    return _wrapped_view
 # def upload_file(request):
 #     if request.method == 'POST':
 #         form = UploadFileForm(request.POST, request.FILES)
@@ -30,6 +41,15 @@ import json
 
 def landing(request):
     return render(request, "LandingPage.html")
+
+
+def logout(request):
+    if 'user_id' in request.session:
+        del request.session['user_id']  # Remove user session data
+    return redirect('login')  # Redirect to the login page after logout
+
+
+
 
 #Login view
 # def login(request):
@@ -143,7 +163,7 @@ def signup(request):
 
 
 # Templates view starting here
-
+@login_required_custom
 def resume_templates(request):
     # Define the path to the JSON file
     json_file_path = os.path.join(settings.BASE_DIR, 'ATS_Project_Mini','static', 'data', 'templates.json')
@@ -174,6 +194,7 @@ def resume_templates(request):
     # ]
     return render(request, "templates.html", {"templates": templates})
 
+@login_required_custom
 def editableTemplates(request):
     # Define the path to the JSON file
     json_file_path = os.path.join(settings.BASE_DIR, 'ATS_Project_Mini','static', 'data', 'editableTemplates.json')
@@ -185,9 +206,19 @@ def editableTemplates(request):
     return render(request, "editTemplates.html", {"templates": templates})
 
 
+# About us views
+# @login_required
+@login_required_custom
+def about_us(request):
+    print(request.user.is_authenticated)
+    if check_login(request):  # Make sure user is logged in
+        return render(request, 'aboutUs.html')
+    return redirect('login')
+    
+
 
 # templates view ends here
-
+@login_required_custom
 def upload_file(request):
     if request.method == 'POST':
         form = UploadFileForm(request.POST, request.FILES)
@@ -239,7 +270,7 @@ def upload_file(request):
 
 
 
-
+@login_required_custom
 def download_file(request, file_id):
     uploaded_file = UploadedFile.objects.get(pk=file_id)
     response = HttpResponse(uploaded_file.file, content_type='application/force-download')
@@ -249,6 +280,7 @@ def download_file(request, file_id):
 
 
 # View to pass resume to Analyzer Framework
+
 def ats_algorithm(filepath):
     # Ensure the path to job_criteria.json is correct
     job_criteria_path = os.path.join(settings.BASE_DIR, 'ATS_Project_Mini', 'static', 'job_criteria.json')
@@ -278,10 +310,18 @@ def ats_algorithm(filepath):
 
 # Views for the Editable Resume templates
 
-
+@login_required_custom
 def beginResume(request):
     return render(request,'beginResume.html')
 
+@login_required_custom
+def beginResume1(request):
+    return render(request,'beginResume1.html')
 
+@login_required_custom
+def beginResume2(request):
+    return render(request,'beginResume2.html')
+
+@login_required_custom
 def editTemplates(request):
     return render(request,'editTemplates.html')

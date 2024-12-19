@@ -96,6 +96,8 @@ DATABASES = {
     }
 }
 
+# settings.py
+LOGIN_URL = '/login/'  # Change to the path of your login page
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
